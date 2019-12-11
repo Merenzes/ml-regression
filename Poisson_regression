@@ -1,0 +1,38 @@
+library(dplyr)
+library(tidyr)
+library(stringr)
+bortkiewicz=read.table("C:/Users/Maja O/Documents/R/bortkiewicz.csv", sep="\t")
+knitr::kable(head(bortkiewicz))
+
+bortkiewicz$corp=rownames(bortkiewicz)
+gather(bortkiewicz, year, value, -corp) %>%mutate(year=as.numeric(str_extract(year, pattern="[0-9]+"))) -> bortkiewicz
+summary(m1 <-glm(value ~ year + corp, family="poisson", data=bortkiewicz))
+
+1-pchisq(summary(m1)$deviance,summary(m1)$df.residual)
+
+anova(glm(value ~ 1, family="poisson", data=bortkiewicz), m1)
+
+1-pchisq(28.4, 14)
+
+step(m1, k =log(nrow(bortkiewicz)))
+
+m2 <-update(m1, . ~ . - corp)
+## test model differences with chi square test
+anova(m2, m1, test = "Chisq")
+
+1-pchisq(summary(m2)$deviance,summary(m2)$df.residual)
+
+
+
+library(ggplot2)
+bortkiewicz$valuehat <-predict(m2, type="response")
+ggplot(bortkiewicz,aes(x = year, y = valuehat)) +
+  geom_point(aes(y = value), alpha=.5, position=position_jitter(h=.1)) +
+  geom_line(size = 1) +labs(x = "Rok", y = "Liczba wypadków")
+
+
+predict(m1, newdata = bortkiewicz[1:10,])
+
+exp(predict(m1, newdata = bortkiewicz[1:10,]))
+
+predict(m1, newdata = bortkiewicz[1:10,], "response")
